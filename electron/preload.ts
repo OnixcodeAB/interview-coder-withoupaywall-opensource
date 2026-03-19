@@ -25,7 +25,8 @@ export const PROCESSING_EVENTS = {
   AUDIO_TRANSCRIPT_READY: "audio-transcript-ready",
   AUDIO_ANSWER_READY: "audio-answer-ready",
   AUDIO_ANSWER_ERROR: "audio-answer-error",
-  AUDIO_TOGGLE_REQUEST: "audio-toggle-request"
+  AUDIO_TOGGLE_REQUEST: "audio-toggle-request",
+  AUDIO_PANEL_TOGGLE_REQUEST: "audio-panel-toggle-request"
 } as const
 
 // At the top of the file
@@ -258,6 +259,13 @@ const electronAPI = {
     ipcRenderer.on(PROCESSING_EVENTS.AUDIO_TOGGLE_REQUEST, subscription)
     return () => {
       ipcRenderer.removeListener(PROCESSING_EVENTS.AUDIO_TOGGLE_REQUEST, subscription)
+    }
+  },
+  onAudioPanelToggleRequest: (callback: () => void) => {
+    const subscription = () => callback()
+    ipcRenderer.on(PROCESSING_EVENTS.AUDIO_PANEL_TOGGLE_REQUEST, subscription)
+    return () => {
+      ipcRenderer.removeListener(PROCESSING_EVENTS.AUDIO_PANEL_TOGGLE_REQUEST, subscription)
     }
   },
   onAudioProcessingStatus: (

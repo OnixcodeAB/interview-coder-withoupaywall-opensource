@@ -33,6 +33,7 @@ export interface ElectronAPI {
   processAudioQuestion: (payload: { audioData: number[]; mimeType?: string }) => Promise<{ success: boolean; transcript?: string; answer?: string; error?: string }>
   toggleAudioCapture: () => Promise<{ success: boolean; error?: string }>
   onAudioToggleRequest: (callback: () => void) => () => void
+  onAudioPanelToggleRequest: (callback: () => void) => () => void
   onAudioProcessingStatus: (callback: (data: { message: string; progress: number }) => void) => () => void
   onAudioTranscriptReady: (callback: (transcript: string) => void) => () => void
   onAudioAnswerReady: (callback: (data: { transcript: string; answer: string }) => void) => () => void

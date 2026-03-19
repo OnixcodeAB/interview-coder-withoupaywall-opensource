@@ -53,7 +53,8 @@ const state = {
     AUDIO_TRANSCRIPT_READY: "audio-transcript-ready",
     AUDIO_ANSWER_READY: "audio-answer-ready",
     AUDIO_ANSWER_ERROR: "audio-answer-error",
-    AUDIO_TOGGLE_REQUEST: "audio-toggle-request"
+    AUDIO_TOGGLE_REQUEST: "audio-toggle-request",
+    AUDIO_PANEL_TOGGLE_REQUEST: "audio-panel-toggle-request"
   } as const
 }
 

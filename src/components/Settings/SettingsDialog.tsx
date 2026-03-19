@@ -503,6 +503,9 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
 
                 <div className="text-white/70">Toggle Audio Capture</div>
                 <div className="text-white/90 font-mono">Ctrl+J / Cmd+J</div>
+
+                <div className="text-white/70">Hide Audio Panel</div>
+                <div className="text-white/90 font-mono">Ctrl+Shift+J / Cmd+Shift+J</div>
               </div>
             </div>
           </div>

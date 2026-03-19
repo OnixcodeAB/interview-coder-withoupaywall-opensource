@@ -11,6 +11,7 @@ type AudioConfig = {
 export function AudioInterviewPanel() {
   const [status, setStatus] = useState<AudioStatus>("idle")
   const [enabled, setEnabled] = useState(false)
+  const [panelVisible, setPanelVisible] = useState(true)
   const [provider, setProvider] = useState<string>("openai")
   const [transcript, setTranscript] = useState("")
   const [answer, setAnswer] = useState("")
@@ -73,6 +74,9 @@ export function AudioInterviewPanel() {
       window.electronAPI.onConfigUpdated((config: AudioConfig) => {
         setEnabled(!!config.audioCaptureEnabled)
         setProvider(config.apiProvider || "openai")
+      }),
+      window.electronAPI.onAudioPanelToggleRequest(() => {
+        setPanelVisible((previous) => !previous)
       }),
       window.electronAPI.onAudioToggleRequest(() => {
         void toggleRecording()
@@ -231,7 +235,7 @@ export function AudioInterviewPanel() {
     await startRecording()
   }
 
-  if (!enabled) {
+  if (!enabled || !panelVisible) {
     return null
   }
 
@@ -244,7 +248,7 @@ export function AudioInterviewPanel() {
               Audio Interview Capture
             </h2>
             <p className="text-xs text-white/60">
-              Capture system audio and turn interview questions into a spoken answer. Shortcut: Ctrl/Cmd+J.
+              Capture system audio and turn interview questions into a spoken answer. Shortcuts: Ctrl/Cmd+J to record, Ctrl/Cmd+Shift+J to hide/show the panel.
             </p>
           </div>
           <Button

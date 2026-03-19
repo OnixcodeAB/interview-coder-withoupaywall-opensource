@@ -173,6 +173,21 @@ export class ShortcutsHelper {
 
       mainWindow.webContents.send("audio-toggle-request")
     })
+
+    globalShortcut.register("CommandOrControl+Shift+J", () => {
+      const mainWindow = this.deps.getMainWindow()
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        return
+      }
+
+      const config = configHelper.loadConfig()
+      if (!config.audioCaptureEnabled) {
+        console.log("Audio panel shortcut ignored because the feature is disabled in settings.")
+        return
+      }
+
+      mainWindow.webContents.send("audio-panel-toggle-request")
+    })
     
     // Unregister shortcuts when quitting
     app.on("will-quit", () => {
