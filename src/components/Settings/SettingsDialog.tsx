@@ -38,9 +38,9 @@ const modelCategories: ModelCategory[] = [
     description: 'Model used to analyze screenshots and extract problem details',
     openaiModels: [
       {
-        id: "gpt-4o",
-        name: "gpt-4o",
-        description: "Best overall performance for problem extraction"
+        id: "gpt-5.4-mini",
+        name: "gpt-5.4-mini",
+        description: "Default OpenAI option for problem extraction"
       },
       {
         id: "gpt-4o-mini",
@@ -84,9 +84,9 @@ const modelCategories: ModelCategory[] = [
     description: 'Model used to generate coding solutions',
     openaiModels: [
       {
-        id: "gpt-4o",
-        name: "gpt-4o",
-        description: "Strong overall performance for coding tasks"
+        id: "gpt-5.4-mini",
+        name: "gpt-5.4-mini",
+        description: "Default OpenAI option for coding tasks"
       },
       {
         id: "gpt-4o-mini",
@@ -130,9 +130,9 @@ const modelCategories: ModelCategory[] = [
     description: 'Model used to debug and improve solutions',
     openaiModels: [
       {
-        id: "gpt-4o",
-        name: "gpt-4o",
-        description: "Best for analyzing code and error messages"
+        id: "gpt-5.4-mini",
+        name: "gpt-5.4-mini",
+        description: "Default OpenAI option for debugging"
       },
       {
         id: "gpt-4o-mini",
@@ -181,9 +181,9 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
   const [open, setOpen] = useState(externalOpen || false);
   const [apiKey, setApiKey] = useState("");
   const [apiProvider, setApiProvider] = useState<APIProvider>("openai");
-  const [extractionModel, setExtractionModel] = useState("gpt-4o");
-  const [solutionModel, setSolutionModel] = useState("gpt-4o");
-  const [debuggingModel, setDebuggingModel] = useState("gpt-4o");
+  const [extractionModel, setExtractionModel] = useState("gpt-5.4-mini");
+  const [solutionModel, setSolutionModel] = useState("gpt-5.4-mini");
+  const [debuggingModel, setDebuggingModel] = useState("gpt-5.4-mini");
   const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
 
@@ -220,9 +220,9 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
         .then((config: Config) => {
           setApiKey(config.apiKey || "");
           setApiProvider(config.apiProvider || "openai");
-          setExtractionModel(config.extractionModel || "gpt-4o");
-          setSolutionModel(config.solutionModel || "gpt-4o");
-          setDebuggingModel(config.debuggingModel || "gpt-4o");
+          setExtractionModel(config.extractionModel || "gpt-5.4-mini");
+          setSolutionModel(config.solutionModel || "gpt-5.4-mini");
+          setDebuggingModel(config.debuggingModel || "gpt-5.4-mini");
         })
         .catch((error: unknown) => {
           console.error("Failed to load config:", error);
@@ -240,9 +240,9 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
     
     // Reset models to defaults when changing provider
     if (provider === "openai") {
-      setExtractionModel("gpt-4o");
-      setSolutionModel("gpt-4o");
-      setDebuggingModel("gpt-4o");
+      setExtractionModel("gpt-5.4-mini");
+      setSolutionModel("gpt-5.4-mini");
+      setDebuggingModel("gpt-5.4-mini");
     } else if (provider === "gemini") {
       setExtractionModel("gemini-1.5-pro");
       setSolutionModel("gemini-1.5-pro");
@@ -342,7 +342,7 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                   />
                   <div className="flex flex-col">
                     <p className="font-medium text-white text-sm">OpenAI</p>
-                    <p className="text-xs text-white/60">GPT-4o models</p>
+                    <p className="text-xs text-white/60">GPT-5.4 mini / GPT-4o mini</p>
                   </div>
                 </div>
               </div>
