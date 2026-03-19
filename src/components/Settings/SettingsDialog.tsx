@@ -184,6 +184,7 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
   const [extractionModel, setExtractionModel] = useState("gpt-5.4-mini");
   const [solutionModel, setSolutionModel] = useState("gpt-5.4-mini");
   const [debuggingModel, setDebuggingModel] = useState("gpt-5.4-mini");
+  const [audioCaptureEnabled, setAudioCaptureEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
 
@@ -213,6 +214,7 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
         extractionModel?: string;
         solutionModel?: string;
         debuggingModel?: string;
+        audioCaptureEnabled?: boolean;
       }
 
       window.electronAPI
@@ -223,6 +225,7 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
           setExtractionModel(config.extractionModel || "gpt-5.4-mini");
           setSolutionModel(config.solutionModel || "gpt-5.4-mini");
           setDebuggingModel(config.debuggingModel || "gpt-5.4-mini");
+          setAudioCaptureEnabled(!!config.audioCaptureEnabled);
         })
         .catch((error: unknown) => {
           console.error("Failed to load config:", error);
@@ -263,6 +266,7 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
         extractionModel,
         solutionModel,
         debuggingModel,
+        audioCaptureEnabled,
       });
       
       if (result) {
@@ -496,11 +500,40 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                 
                 <div className="text-white/70">Zoom In</div>
                 <div className="text-white/90 font-mono">Ctrl+= / Cmd+=</div>
+
+                <div className="text-white/70">Toggle Audio Capture</div>
+                <div className="text-white/90 font-mono">Ctrl+J / Cmd+J</div>
               </div>
             </div>
           </div>
           
           <div className="space-y-4 mt-4">
+            <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <label className="text-sm font-medium text-white">
+                    Enable System Audio Capture
+                  </label>
+                  <p className="mt-1 text-xs text-white/60">
+                    Windows-only. This adds a small interview audio panel and enables the Ctrl/Cmd+J shortcut for recording system audio.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAudioCaptureEnabled((previous) => !previous)}
+                  className={`h-6 w-11 rounded-full transition-colors ${
+                    audioCaptureEnabled ? "bg-emerald-400/90" : "bg-white/15"
+                  }`}
+                >
+                  <span
+                    className={`block h-5 w-5 rounded-full bg-white transition-transform ${
+                      audioCaptureEnabled ? "translate-x-5" : "translate-x-0.5"
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
             <label className="text-sm font-medium text-white">AI Model Selection</label>
             <p className="text-xs text-white/60 -mt-3 mb-2">
               Select which models to use for each stage of the process

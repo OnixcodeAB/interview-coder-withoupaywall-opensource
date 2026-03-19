@@ -1290,6 +1290,150 @@ If you include code examples, use proper markdown code blocks with language spec
     }
   }
 
+  public async processAudioQuestion(
+    audioBuffer: Buffer,
+    mimeType = "audio/webm"
+  ): Promise<{ success: boolean; transcript?: string; answer?: string; error?: string }> {
+    const mainWindow = this.deps.getMainWindow()
+    const config = configHelper.loadConfig()
+
+    const sendStatus = (message: string, progress: number) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(
+          this.deps.PROCESSING_EVENTS.AUDIO_PROCESSING_STATUS,
+          { message, progress }
+        )
+      }
+    }
+
+    const sendError = (message: string) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(
+          this.deps.PROCESSING_EVENTS.AUDIO_ANSWER_ERROR,
+          message
+        )
+      }
+    }
+
+    if (config.apiProvider !== "openai") {
+      const error =
+        "Audio capture currently requires OpenAI. Switch the API provider to OpenAI in Settings and try again."
+      sendError(error)
+      return { success: false, error }
+    }
+
+    if (!audioBuffer.length) {
+      const error = "No audio was captured. Try recording again."
+      sendError(error)
+      return { success: false, error }
+    }
+
+    if (!this.openaiClient) {
+      this.initializeAIClient()
+    }
+
+    if (!this.openaiClient) {
+      const error = "OpenAI API key not configured. Please check your settings."
+      sendError(error)
+      return { success: false, error }
+    }
+
+    const extensionByMimeType: Record<string, string> = {
+      "audio/webm": ".webm",
+      "audio/webm;codecs=opus": ".webm",
+      "video/webm": ".webm",
+      "video/webm;codecs=vp8,opus": ".webm",
+      "video/webm;codecs=vp9,opus": ".webm",
+      "audio/mp4": ".mp4",
+      "audio/mpeg": ".mp3",
+      "audio/wav": ".wav"
+    }
+
+    const extension = extensionByMimeType[mimeType] || ".webm"
+    const tempPath = path.join(
+      app.getPath("temp"),
+      `interview-audio-${Date.now()}${extension}`
+    )
+
+    try {
+      sendStatus("Saving captured audio...", 15)
+      fs.writeFileSync(tempPath, audioBuffer)
+
+      sendStatus("Transcribing interview question...", 45)
+      const transcription = await this.openaiClient.audio.transcriptions.create({
+        file: fs.createReadStream(tempPath),
+        model: "whisper-1"
+      })
+
+      const transcript = transcription.text?.trim()
+      if (!transcript) {
+        const error = "No speech was detected in the recording. Please try again."
+        sendError(error)
+        return { success: false, error }
+      }
+
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(
+          this.deps.PROCESSING_EVENTS.AUDIO_TRANSCRIPT_READY,
+          transcript
+        )
+      }
+
+      sendStatus("Generating interview answer...", 75)
+      const completion = await this.openaiClient.chat.completions.create({
+        model: config.solutionModel || "gpt-5.4-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a professional interview coach. Answer the user's interview question in a concise, natural, spoken style. Avoid markdown, bullet points, or robotic phrasing unless explicitly requested."
+          },
+          {
+            role: "user",
+            content:
+              `Interview question transcript:\n${transcript}\n\nWrite a confident spoken answer the user can say out loud during the interview. Keep it concise, direct, and human.`
+          }
+        ],
+        max_completion_tokens: 700,
+        temperature: 0.7
+      })
+
+      const answer = completion.choices[0]?.message?.content?.trim()
+      if (!answer) {
+        const error = "The interview answer could not be generated. Please try again."
+        sendError(error)
+        return { success: false, error }
+      }
+
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(
+          this.deps.PROCESSING_EVENTS.AUDIO_ANSWER_READY,
+          { transcript, answer }
+        )
+      }
+
+      sendStatus("Interview answer ready.", 100)
+      return { success: true, transcript, answer }
+    } catch (error: any) {
+      console.error("Audio processing error:", error)
+
+      let message = error?.message || "Failed to process audio question"
+      if (error?.status === 401) {
+        message = "Invalid OpenAI API key. Please check your settings."
+      } else if (error?.status === 429) {
+        message =
+          "OpenAI rate limit exceeded or insufficient credits. Please try again later."
+      }
+
+      sendError(message)
+      return { success: false, error: message }
+    } finally {
+      if (fs.existsSync(tempPath)) {
+        fs.unlinkSync(tempPath)
+      }
+    }
+  }
+
   public cancelOngoingRequests(): void {
     let wasCancelled = false
 

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen, shell, ipcMain } from "electron"
+import { app, BrowserWindow, desktopCapturer, screen, session, shell } from "electron"
 import path from "path"
 import fs from "fs"
 import { initializeIpcHandlers } from "./ipcHandlers"
@@ -47,7 +47,12 @@ const state = {
     INITIAL_SOLUTION_ERROR: "solution-error",
     DEBUG_START: "debug-start",
     DEBUG_SUCCESS: "debug-success",
-    DEBUG_ERROR: "debug-error"
+    DEBUG_ERROR: "debug-error",
+    AUDIO_PROCESSING_STATUS: "audio-processing-status",
+    AUDIO_TRANSCRIPT_READY: "audio-transcript-ready",
+    AUDIO_ANSWER_READY: "audio-answer-ready",
+    AUDIO_ANSWER_ERROR: "audio-answer-error",
+    AUDIO_TOGGLE_REQUEST: "audio-toggle-request"
   } as const
 }
 
@@ -152,6 +157,37 @@ function initializeHelpers() {
     moveWindowUp: () => moveWindowVertical((y) => y - state.step),
     moveWindowDown: () => moveWindowVertical((y) => y + state.step)
   } as IShortcutsHelperDeps)
+}
+
+function configureDisplayMediaHandler(): void {
+  if (process.platform !== "win32") {
+    return
+  }
+
+  session.defaultSession.setDisplayMediaRequestHandler(
+    async (_request, callback) => {
+      try {
+        const sources = await desktopCapturer.getSources({
+          types: ["screen"],
+          thumbnailSize: { width: 0, height: 0 }
+        })
+
+        const primarySource = sources[0]
+        if (!primarySource) {
+          callback({})
+          return
+        }
+
+        callback({
+          video: primarySource,
+          audio: "loopback"
+        })
+      } catch (error) {
+        console.error("Failed to configure display media request:", error)
+        callback({})
+      }
+    }
+  )
 }
 
 // Auth callback handler
@@ -524,6 +560,7 @@ async function initializeApp() {
     app.setPath('cache', cachePath)
       
     loadEnvVariables()
+    configureDisplayMediaHandler()
     
     // Ensure a configuration file exists
     if (!configHelper.hasApiKey()) {

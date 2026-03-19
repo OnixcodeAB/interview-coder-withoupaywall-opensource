@@ -35,6 +35,47 @@ export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
     return result;
   })
 
+  ipcMain.handle("process-audio-question", async (_event, payload: { audioData: number[]; mimeType?: string }) => {
+    try {
+      if (!configHelper.hasApiKey()) {
+        const mainWindow = deps.getMainWindow()
+        if (mainWindow) {
+          mainWindow.webContents.send(deps.PROCESSING_EVENTS.API_KEY_INVALID)
+        }
+        return { success: false, error: "API key required" }
+      }
+
+      const audioBuffer = Buffer.from(payload.audioData)
+      return await deps.processingHelper?.processAudioQuestion(audioBuffer, payload.mimeType) || {
+        success: false,
+        error: "Audio processing helper unavailable"
+      }
+    } catch (error) {
+      console.error("Error processing audio question:", error)
+      return { success: false, error: "Failed to process audio question" }
+    }
+  })
+
+  ipcMain.handle("toggle-audio-capture", () => {
+    try {
+      const mainWindow = deps.getMainWindow()
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        return { success: false, error: "Main window not available" }
+      }
+
+      const config = configHelper.loadConfig()
+      if (!config.audioCaptureEnabled) {
+        return { success: false, error: "Audio capture is disabled in settings" }
+      }
+
+      mainWindow.webContents.send(deps.PROCESSING_EVENTS.AUDIO_TOGGLE_REQUEST)
+      return { success: true }
+    } catch (error) {
+      console.error("Error toggling audio capture:", error)
+      return { success: false, error: "Failed to toggle audio capture" }
+    }
+  })
+
   // Credits handlers
   ipcMain.handle("set-initial-credits", async (_event, credits: number) => {
     const mainWindow = deps.getMainWindow()

@@ -1,5 +1,4 @@
 export interface ElectronAPI {
-  // Original methods
   openSubscriptionPortal: (authData: {
     id: string
     email: string
@@ -9,17 +8,9 @@ export interface ElectronAPI {
     height: number
   }) => Promise<void>
   clearStore: () => Promise<{ success: boolean; error?: string }>
-  getScreenshots: () => Promise<{
-    success: boolean
-    previews?: Array<{ path: string; preview: string }> | null
-    error?: string
-  }>
-  deleteScreenshot: (
-    path: string
-  ) => Promise<{ success: boolean; error?: string }>
-  onScreenshotTaken: (
-    callback: (data: { path: string; preview: string }) => void
-  ) => () => void
+  getScreenshots: () => Promise<any>
+  deleteScreenshot: (path: string) => Promise<{ success: boolean; error?: string }>
+  onScreenshotTaken: (callback: (data: { path: string; preview: string }) => void) => () => void
   onResetView: (callback: () => void) => () => void
   onSolutionStart: (callback: () => void) => () => void
   onDebugStart: (callback: () => void) => () => void
@@ -39,6 +30,13 @@ export interface ElectronAPI {
   triggerMoveRight: () => Promise<{ success: boolean; error?: string }>
   triggerMoveUp: () => Promise<{ success: boolean; error?: string }>
   triggerMoveDown: () => Promise<{ success: boolean; error?: string }>
+  processAudioQuestion: (payload: { audioData: number[]; mimeType?: string }) => Promise<{ success: boolean; transcript?: string; answer?: string; error?: string }>
+  toggleAudioCapture: () => Promise<{ success: boolean; error?: string }>
+  onAudioToggleRequest: (callback: () => void) => () => void
+  onAudioProcessingStatus: (callback: (data: { message: string; progress: number }) => void) => () => void
+  onAudioTranscriptReady: (callback: (transcript: string) => void) => () => void
+  onAudioAnswerReady: (callback: (data: { transcript: string; answer: string }) => void) => () => void
+  onAudioAnswerError: (callback: (error: string) => void) => () => void
   onSubscriptionUpdated: (callback: () => void) => () => void
   onSubscriptionPortalClosed: (callback: () => void) => () => void
   startUpdate: () => Promise<{ success: boolean; error?: string }>
@@ -51,16 +49,18 @@ export interface ElectronAPI {
   onCreditsUpdated: (callback: (credits: number) => void) => () => void
   onOutOfCredits: (callback: () => void) => () => void
   openSettingsPortal: () => Promise<void>
+  onShowSettings: (callback: () => void) => () => void
   getPlatform: () => string
   
-  // New methods for OpenAI integration
-  getConfig: () => Promise<{ apiKey: string; model: string }>
-  updateConfig: (config: { apiKey?: string; model?: string }) => Promise<boolean>
+  getConfig: () => Promise<any>
+  updateConfig: (config: any) => Promise<any>
   checkApiKey: () => Promise<boolean>
   validateApiKey: (apiKey: string) => Promise<{ valid: boolean; error?: string }>
   openLink: (url: string) => void
   onApiKeyInvalid: (callback: () => void) => () => void
   removeListener: (eventName: string, callback: (...args: any[]) => void) => void
+  onDeleteLastScreenshot: (callback: () => void) => () => void
+  deleteLastScreenshot: () => Promise<{ success: boolean; error?: string }>
 }
 
 declare global {

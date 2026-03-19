@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
 import Queue from "../_pages/Queue"
 import Solutions from "../_pages/Solutions"
+import { AudioInterviewPanel } from "../components/AudioInterviewPanel"
 import { useToast } from "../contexts/toast"
 
 interface SubscribedAppProps {
@@ -136,6 +137,7 @@ const SubscribedApp: React.FC<SubscribedAppProps> = ({
 
   return (
     <div ref={containerRef} className="min-h-0">
+      <AudioInterviewPanel />
       {view === "queue" ? (
         <Queue
           setView={setView}

@@ -19,7 +19,12 @@ export const PROCESSING_EVENTS = {
   //states for processing the debugging
   DEBUG_START: "debug-start",
   DEBUG_SUCCESS: "debug-success",
-  DEBUG_ERROR: "debug-error"
+  DEBUG_ERROR: "debug-error",
+  AUDIO_PROCESSING_STATUS: "audio-processing-status",
+  AUDIO_TRANSCRIPT_READY: "audio-transcript-ready",
+  AUDIO_ANSWER_READY: "audio-answer-ready",
+  AUDIO_ANSWER_ERROR: "audio-answer-error",
+  AUDIO_TOGGLE_REQUEST: "audio-toggle-request"
 } as const
 
 // At the top of the file
@@ -156,6 +161,9 @@ const electronAPI = {
   triggerMoveRight: () => ipcRenderer.invoke("trigger-move-right"),
   triggerMoveUp: () => ipcRenderer.invoke("trigger-move-up"),
   triggerMoveDown: () => ipcRenderer.invoke("trigger-move-down"),
+  processAudioQuestion: (payload: { audioData: number[]; mimeType?: string }) =>
+    ipcRenderer.invoke("process-audio-question", payload),
+  toggleAudioCapture: () => ipcRenderer.invoke("toggle-audio-capture"),
   onSubscriptionUpdated: (callback: () => void) => {
     const subscription = () => callback()
     ipcRenderer.on("subscription-updated", subscription)
@@ -236,7 +244,48 @@ const electronAPI = {
       ipcRenderer.removeListener("delete-last-screenshot", subscription)
     }
   },
-  deleteLastScreenshot: () => ipcRenderer.invoke("delete-last-screenshot")
+  deleteLastScreenshot: () => ipcRenderer.invoke("delete-last-screenshot"),
+  onAudioToggleRequest: (callback: () => void) => {
+    const subscription = () => callback()
+    ipcRenderer.on(PROCESSING_EVENTS.AUDIO_TOGGLE_REQUEST, subscription)
+    return () => {
+      ipcRenderer.removeListener(PROCESSING_EVENTS.AUDIO_TOGGLE_REQUEST, subscription)
+    }
+  },
+  onAudioProcessingStatus: (
+    callback: (data: { message: string; progress: number }) => void
+  ) => {
+    const subscription = (_: any, data: { message: string; progress: number }) =>
+      callback(data)
+    ipcRenderer.on(PROCESSING_EVENTS.AUDIO_PROCESSING_STATUS, subscription)
+    return () => {
+      ipcRenderer.removeListener(PROCESSING_EVENTS.AUDIO_PROCESSING_STATUS, subscription)
+    }
+  },
+  onAudioTranscriptReady: (callback: (transcript: string) => void) => {
+    const subscription = (_: any, transcript: string) => callback(transcript)
+    ipcRenderer.on(PROCESSING_EVENTS.AUDIO_TRANSCRIPT_READY, subscription)
+    return () => {
+      ipcRenderer.removeListener(PROCESSING_EVENTS.AUDIO_TRANSCRIPT_READY, subscription)
+    }
+  },
+  onAudioAnswerReady: (
+    callback: (data: { transcript: string; answer: string }) => void
+  ) => {
+    const subscription = (_: any, data: { transcript: string; answer: string }) =>
+      callback(data)
+    ipcRenderer.on(PROCESSING_EVENTS.AUDIO_ANSWER_READY, subscription)
+    return () => {
+      ipcRenderer.removeListener(PROCESSING_EVENTS.AUDIO_ANSWER_READY, subscription)
+    }
+  },
+  onAudioAnswerError: (callback: (error: string) => void) => {
+    const subscription = (_: any, error: string) => callback(error)
+    ipcRenderer.on(PROCESSING_EVENTS.AUDIO_ANSWER_ERROR, subscription)
+    return () => {
+      ipcRenderer.removeListener(PROCESSING_EVENTS.AUDIO_ANSWER_ERROR, subscription)
+    }
+  }
 }
 
 // Before exposing the API
