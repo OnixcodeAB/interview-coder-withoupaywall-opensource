@@ -48,6 +48,7 @@ const state = {
     DEBUG_START: "debug-start",
     DEBUG_SUCCESS: "debug-success",
     DEBUG_ERROR: "debug-error",
+    CONFIG_UPDATED: "config-updated",
     AUDIO_PROCESSING_STATUS: "audio-processing-status",
     AUDIO_TRANSCRIPT_READY: "audio-transcript-ready",
     AUDIO_ANSWER_READY: "audio-answer-ready",
@@ -191,6 +192,11 @@ function configureDisplayMediaHandler(): void {
 }
 
 // Auth callback handler
+configHelper.on("config-updated", (config) => {
+  if (state.mainWindow && !state.mainWindow.isDestroyed()) {
+    state.mainWindow.webContents.send(state.PROCESSING_EVENTS.CONFIG_UPDATED, config)
+  }
+})
 
 // Register the interview-coder protocol
 if (process.platform === "darwin") {

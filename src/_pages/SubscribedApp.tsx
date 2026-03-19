@@ -49,26 +49,48 @@ const SubscribedApp: React.FC<SubscribedAppProps> = ({
   useEffect(() => {
     if (!containerRef.current) return
 
+    let frameId = 0
+    let lastWidth = 0
+    let lastHeight = 0
+
     const updateDimensions = () => {
       if (!containerRef.current) return
       const height = containerRef.current.scrollHeight || 600
       const width = containerRef.current.scrollWidth || 800
+
+      if (width === lastWidth && height === lastHeight) {
+        return
+      }
+
+      lastWidth = width
+      lastHeight = height
       window.electronAPI?.updateContentDimensions({ width, height })
     }
 
+    const scheduleDimensionsUpdate = () => {
+      if (frameId) {
+        cancelAnimationFrame(frameId)
+      }
+
+      frameId = requestAnimationFrame(() => {
+        frameId = 0
+        updateDimensions()
+      })
+    }
+
     // Force initial dimension update immediately
-    updateDimensions()
+    scheduleDimensionsUpdate()
     
     // Set a fallback timer to ensure dimensions are set even if content isn't fully loaded
     const fallbackTimer = setTimeout(() => {
-      window.electronAPI?.updateContentDimensions({ width: 800, height: 600 })
+      scheduleDimensionsUpdate()
     }, 500)
 
-    const resizeObserver = new ResizeObserver(updateDimensions)
+    const resizeObserver = new ResizeObserver(scheduleDimensionsUpdate)
     resizeObserver.observe(containerRef.current)
 
     // Also watch DOM changes
-    const mutationObserver = new MutationObserver(updateDimensions)
+    const mutationObserver = new MutationObserver(scheduleDimensionsUpdate)
     mutationObserver.observe(containerRef.current, {
       childList: true,
       subtree: true,
@@ -77,9 +99,12 @@ const SubscribedApp: React.FC<SubscribedAppProps> = ({
     })
 
     // Do another update after a delay to catch any late-loading content
-    const delayedUpdate = setTimeout(updateDimensions, 1000)
+    const delayedUpdate = setTimeout(scheduleDimensionsUpdate, 1000)
 
     return () => {
+      if (frameId) {
+        cancelAnimationFrame(frameId)
+      }
       resizeObserver.disconnect()
       mutationObserver.disconnect()
       clearTimeout(fallbackTimer)

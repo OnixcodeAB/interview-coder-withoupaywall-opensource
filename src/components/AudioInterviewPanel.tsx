@@ -22,6 +22,8 @@ export function AudioInterviewPanel() {
   const captureStreamRef = useRef<MediaStream | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const statusRef = useRef<AudioStatus>("idle")
+  const enabledRef = useRef(false)
+  const providerRef = useRef("openai")
 
   const platform = window.electronAPI.getPlatform()
   const isSupported = platform === "win32"
@@ -29,6 +31,14 @@ export function AudioInterviewPanel() {
   useEffect(() => {
     statusRef.current = status
   }, [status])
+
+  useEffect(() => {
+    enabledRef.current = enabled
+  }, [enabled])
+
+  useEffect(() => {
+    providerRef.current = provider
+  }, [provider])
 
   useEffect(() => {
     let cancelled = false
@@ -60,6 +70,10 @@ export function AudioInterviewPanel() {
 
   useEffect(() => {
     const cleanup = [
+      window.electronAPI.onConfigUpdated((config: AudioConfig) => {
+        setEnabled(!!config.audioCaptureEnabled)
+        setProvider(config.apiProvider || "openai")
+      }),
       window.electronAPI.onAudioToggleRequest(() => {
         void toggleRecording()
       }),
@@ -98,6 +112,7 @@ export function AudioInterviewPanel() {
       recorder.stop()
     } else {
       stopTracks()
+      mediaRecorderRef.current = null
       setStatus("idle")
     }
   }
@@ -108,7 +123,7 @@ export function AudioInterviewPanel() {
       return
     }
 
-    if (!enabled) {
+    if (!enabledRef.current) {
       setError("Enable audio capture in Settings before starting a recording.")
       return
     }
@@ -161,6 +176,7 @@ export function AudioInterviewPanel() {
 
       recorder.onstop = async () => {
         stopTracks()
+        mediaRecorderRef.current = null
         setStatus("processing")
         setProgressMessage("Preparing recorded audio...")
         setProgressValue(10)
@@ -207,6 +223,11 @@ export function AudioInterviewPanel() {
       return
     }
 
+    if (providerRef.current !== "openai") {
+      setError("Switch the API provider to OpenAI in Settings to use audio capture.")
+      return
+    }
+
     await startRecording()
   }
 
@@ -215,7 +236,7 @@ export function AudioInterviewPanel() {
   }
 
   return (
-    <div className="mb-3 rounded-xl border border-emerald-300/20 bg-black/70 px-4 py-3 text-white shadow-lg shadow-emerald-950/20">
+    <div className="mb-3 min-h-[132px] rounded-xl border border-emerald-300/20 bg-black/70 px-4 py-3 text-white shadow-lg shadow-emerald-950/20">
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -259,7 +280,7 @@ export function AudioInterviewPanel() {
           <div className="space-y-2">
             <div className="h-2 overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-emerald-300 transition-all"
+                className="h-full rounded-full bg-emerald-300 transition-[width] duration-200"
                 style={{ width: `${Math.max(progressValue, status === "recording" ? 100 : 0)}%` }}
               />
             </div>

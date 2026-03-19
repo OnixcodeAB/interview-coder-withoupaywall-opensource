@@ -58,6 +58,7 @@ export interface ElectronAPI {
   validateApiKey: (apiKey: string) => Promise<{ valid: boolean; error?: string }>
   openLink: (url: string) => void
   onApiKeyInvalid: (callback: () => void) => () => void
+  onConfigUpdated: (callback: (config: any) => void) => () => void
   removeListener: (eventName: string, callback: (...args: any[]) => void) => void
   onDeleteLastScreenshot: (callback: () => void) => () => void
   deleteLastScreenshot: () => Promise<{ success: boolean; error?: string }>

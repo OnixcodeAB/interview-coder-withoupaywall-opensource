@@ -20,6 +20,7 @@ export const PROCESSING_EVENTS = {
   DEBUG_START: "debug-start",
   DEBUG_SUCCESS: "debug-success",
   DEBUG_ERROR: "debug-error",
+  CONFIG_UPDATED: "config-updated",
   AUDIO_PROCESSING_STATUS: "audio-processing-status",
   AUDIO_TRANSCRIPT_READY: "audio-transcript-ready",
   AUDIO_ANSWER_READY: "audio-answer-ready",
@@ -232,6 +233,13 @@ const electronAPI = {
     ipcRenderer.on(PROCESSING_EVENTS.API_KEY_INVALID, subscription)
     return () => {
       ipcRenderer.removeListener(PROCESSING_EVENTS.API_KEY_INVALID, subscription)
+    }
+  },
+  onConfigUpdated: (callback: (config: any) => void) => {
+    const subscription = (_: any, config: any) => callback(config)
+    ipcRenderer.on(PROCESSING_EVENTS.CONFIG_UPDATED, subscription)
+    return () => {
+      ipcRenderer.removeListener(PROCESSING_EVENTS.CONFIG_UPDATED, subscription)
     }
   },
   removeListener: (eventName: string, callback: (...args: any[]) => void) => {
